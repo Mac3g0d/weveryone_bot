@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"log"
@@ -10,20 +11,31 @@ import (
 	"time"
 )
 
-var participants []string
+var (
+	participants    []string
+	username        string
+	lastCommandCall = make(map[int64]time.Time)
+)
+
+func init() {
+	var err error
+	err = godotenv.Load()
+	if err != nil {
+		//log.Println("Error readin .env: ", err)
+		//os.Exit(1)
+	}
+
+}
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
-	lastCommandCall := make(map[int64]time.Time)
+	AdminTelegramId, _ := strconv.ParseInt(os.Getenv("ADMIN_TELEGRAM_ID"), 10, 64)
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	bot.Debug = true
-
+	fmt.Print()
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
@@ -37,37 +49,48 @@ func main() {
 		if update.Message == nil {
 			continue
 		}
-
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+		msg.ParseMode = tgbotapi.ModeMarkdown
 		switch update.Message.Command() {
 
 		case "add":
-			AddHandler(bot, update)
-
-		case "addme":
-			AddMeHandler(bot, update)
-
-		case "del":
-			DelHandler(bot, update)
-
-		case "delme":
-			DelMeHandler(bot, update)
-		case "list":
-			ListHandler(bot, update)
-
-		case "all", "everyone":
-			if lastCallTime, ok := lastCommandCall[update.Message.Chat.ID]; ok && time.Now().Sub(lastCallTime) < time.Minute {
-				msg := tgbotapi.NewMessage(
-					update.Message.Chat.ID,
-					"Вы уже вызывали эту команду в последнюю минуту")
-				bot.Send(msg)
+			if update.Message.From.ID == AdminTelegramId {
+				msg.Text = GetAddCommandText(update.Message.CommandArguments())
 			} else {
-				lastCommandCall[update.Message.Chat.ID] = time.Now()
-				AllHandler(bot, update)
+				msg.Text = "У вас нет прав для добавления в спискок"
 			}
 
+		case "addme":
+			msg.Text = GetAddMeCommandText(update.Message.From.UserName)
+
+		case "del":
+			if update.Message.From.ID == AdminTelegramId {
+				msg.Text = GetDelCommandText(update.Message.CommandArguments())
+			} else {
+				msg.Text = "У вас нет прав для удаления из списка"
+			}
+
+		case "delme":
+			msg.Text = GetDelMeCommandText(update.Message.From.UserName)
+
+		case "list":
+			msg.Text = GetListCommandText()
+
+		case "all", "everyone":
+			msg.Text = GetAllCommandText(update.Message.Chat.ID)
+
 		case "help":
-			HelpHandler(bot, update)
+			msg.Text = GetHelpCommandText()
+
 		}
+		if msg.Text != "" {
+			sentMessage, err := bot.Send(msg)
+			if err != nil {
+				log.Fatal(sentMessage, err)
+			}
+		}
+		//log.Printf("send message %s to %v", sentMessage.Text, sentMessage.Chat.ID)
+
 	}
 
 }
@@ -82,48 +105,38 @@ func contains(arr []string, item string) bool {
 }
 
 func DelParticipants(arr []string) {
-	for _, username := range arr {
-		username = strings.ReplaceAll(username, "@", "")
-		if contains(participants, username) {
+	for _, name := range arr {
+		name = strings.ReplaceAll(name, "@", "")
+		if contains(participants, name) {
 			for i, user := range participants {
-				if user == username {
+				if user == name {
 					participants = append(participants[:i], participants[i+1:]...)
 					break
 				}
 			}
 		}
-
 	}
 }
 
 func AddParticipants(arr []string) {
-	for _, username := range arr {
-		username = strings.ReplaceAll(username, "@", "")
-		if !contains(participants, username) {
-			participants = append(participants, username)
+	for _, name := range arr {
+		name = strings.ReplaceAll(name, "@", "")
+		if !contains(participants, name) {
+			participants = append(participants, name)
 		}
-
 	}
 }
-func AddMeHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	username := update.Message.From.UserName
-	text := ""
 
+func GetAddMeCommandText(username string) string {
 	if !contains(participants, username) {
 		participants = append(participants, username)
-		text = "Пользователь " + username + " добавлен в список."
+		return "Пользователь " + username + " добавлен в список."
 	} else {
-		text = "Пользователь " + username + " уже есть в списке."
+		return "Пользователь " + username + " уже есть в списке."
 	}
-
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
-	bot.Send(msg)
 }
 
-func DelMeHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	username := update.Message.From.UserName
-	text := ""
-
+func GetDelMeCommandText(username string) string {
 	if contains(participants, username) {
 		for i, user := range participants {
 			if user == username {
@@ -131,20 +144,18 @@ func DelMeHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 				break
 			}
 		}
-		text = "Пользователь " + username + " удален из списка."
+		return "Пользователь " + username + " удален из списка."
 	} else {
-		text = "Пользователя " + username + " нет в списке."
+		return "Пользователя " + username + " нет в списке."
 	}
-
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
-	bot.Send(msg)
 }
 
-func AddHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	arguments := update.Message.CommandArguments()
-	username := ""
-	text := ""
+func GetAddCommandText(arguments string) string {
 	usernames := strings.Split(arguments, " ")
+	log.Printf("asdf")
+	if len(arguments) == 0 {
+		return "Вы не указали пользователей которых нужно добавить в список."
+	}
 
 	if len(usernames) < 2 {
 		username = usernames[0]
@@ -152,24 +163,23 @@ func AddHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	if len(usernames) > 2 {
 		AddParticipants(usernames)
-		text = "Пользователи :\n" + strings.Join(usernames, "\n") + "\nдобавленны в список."
+		return "Пользователи :\n" + strings.Join(usernames, "\n") + "\nдобавленны в список."
 	} else {
 		if !contains(participants, username) {
 			participants = append(participants, username)
-			text = "Добавлен пользователь " + username + " в список."
+			return "Добавлен пользователь " + username + " в список."
 		} else {
-			text = "Пользователь " + username + " уже есть в списке."
+			return "Пользователь " + username + " уже есть в списке."
 		}
 	}
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
-	bot.Send(msg)
 }
 
-func DelHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	arguments := update.Message.CommandArguments()
-	username := ""
-	text := ""
+func GetDelCommandText(arguments string) string {
 	usernames := strings.Split(arguments, " ")
+
+	if len(arguments) == 0 {
+		return "Вы не указали пользователей которых нужно удалить из список."
+	}
 
 	if len(usernames) < 2 {
 		username = usernames[0]
@@ -177,7 +187,7 @@ func DelHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 
 	if len(usernames) > 2 {
 		DelParticipants(usernames)
-		text = "Пользователи :\n" + strings.Join(usernames, "\n") + "\nудалены из списка."
+		return "Пользователи :\n" + strings.Join(usernames, "\n") + "\nудалены из списка."
 	} else {
 		if contains(participants, username) {
 			for i, user := range participants {
@@ -186,36 +196,36 @@ func DelHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 					break
 				}
 			}
-			text = "Пользователь " + username + " удален из списка."
+			return "Пользователь " + username + " удален из списка."
 		} else {
-			text = "Пользователя " + username + " нет в списке."
+			return "Пользователя " + username + " нет в списке."
 		}
 	}
 
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
-	bot.Send(msg)
 }
 
-func ListHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+func GetListCommandText() string {
 	var sb strings.Builder
 	sb.WriteString("Список участников:\n")
-	for i, user := range participants {
-		sb.WriteString(strconv.Itoa(i+1) + ". " + user + "\n")
+	sb.WriteString(strings.Join(participants, "\n"))
+	return sb.String()
+}
+
+func GetAllCommandText(ChatID int64) string {
+	var sb strings.Builder
+	if lastCallTime, ok := lastCommandCall[ChatID]; ok && time.Now().Sub(lastCallTime) < time.Minute {
+		sb.WriteString("Эта команда уже была вызвана минутой ранее")
+	} else {
+		lastCommandCall[ChatID] = time.Now()
+		sb.WriteString("Подсосы, общий сбор!\n" + "@" + strings.Join(participants, " @") + " ")
 	}
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, sb.String())
-	bot.Send(msg)
+	return sb.String()
+
 }
 
-func AllHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
+func GetHelpCommandText() string {
 	var sb strings.Builder
-	sb.WriteString("Подсосы, общий сбор!\n" + "@" + strings.Join(participants, " @") + " ")
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, sb.String())
-	bot.Send(msg)
-}
-
-func HelpHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
-	var sb strings.Builder
-	text := `Доступные комманды:
+	sb.WriteString(`Доступные комманды:
 /addme - добавить себя в список для _@all_
 /add *username* - добавить участника в список по никнейму
 /add *username1* *username2* ... *usernameN* добавить несколько участников в список по никнейму
@@ -223,9 +233,7 @@ func HelpHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 /del *username* - удалить участника из списока по никнейму
 /del *username1* *username2* ... *usernameN* удалить несколько участников из списока по никнейму
 /list - показать список всех участников
-/all, /everyone - тегнуть в чате всех кто в списке`
-	sb.WriteString(text)
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, sb.String())
-	msg.ParseMode = tgbotapi.ModeMarkdown
-	bot.Send(msg)
+/all, /everyone - тегнуть в чате всех кто в списке`)
+
+	return sb.String()
 }
