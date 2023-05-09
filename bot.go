@@ -130,7 +130,7 @@ func AddParticipants(arr []string) {
 func GetAddMeCommandText(username string) string {
 	if !contains(participants, username) {
 		participants = append(participants, username)
-		return "Пользователь " + username + " добавлен в список."
+		return "Пользователь `" + username + "` добавлен в список."
 	} else {
 		return "Пользователь " + username + " уже есть в списке."
 	}
