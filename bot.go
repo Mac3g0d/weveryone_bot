@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"log"
@@ -21,8 +20,7 @@ func init() {
 	var err error
 	err = godotenv.Load()
 	if err != nil {
-		//log.Println("Error readin .env: ", err)
-		//os.Exit(1)
+
 	}
 
 }
@@ -35,7 +33,6 @@ func main() {
 	}
 
 	bot.Debug = true
-	fmt.Print()
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
@@ -50,7 +47,7 @@ func main() {
 			continue
 		}
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-		msg.ParseMode = tgbotapi.ModeMarkdown
+		msg.ParseMode = tgbotapi.ModeHTML
 		switch update.Message.Command() {
 
 		case "add":
@@ -81,6 +78,7 @@ func main() {
 
 		case "help":
 			msg.Text = GetHelpCommandText()
+			msg.ParseMode = tgbotapi.ModeMarkdown
 
 		}
 		if msg.Text != "" {
@@ -89,7 +87,6 @@ func main() {
 				log.Fatal(sentMessage, err)
 			}
 		}
-		//log.Printf("send message %s to %v", sentMessage.Text, sentMessage.Chat.ID)
 
 	}
 
@@ -130,7 +127,7 @@ func AddParticipants(arr []string) {
 func GetAddMeCommandText(username string) string {
 	if !contains(participants, username) {
 		participants = append(participants, username)
-		return "Пользователь `" + username + "` добавлен в список."
+		return "Пользователь " + username + " добавлен в список."
 	} else {
 		return "Пользователь " + username + " уже есть в списке."
 	}
@@ -152,7 +149,6 @@ func GetDelMeCommandText(username string) string {
 
 func GetAddCommandText(arguments string) string {
 	usernames := strings.Split(arguments, " ")
-	log.Printf("asdf")
 	if len(arguments) == 0 {
 		return "Вы не указали пользователей которых нужно добавить в список."
 	}
