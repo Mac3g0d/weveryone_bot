@@ -23,7 +23,7 @@ jobs:
       run: docker system prune -a -f
       
   deploy:
-    needs: cleanup 
+    needs: ["create_blank_env_file", "cleanup"] 
     runs-on: self-hosted
     env:
       ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
