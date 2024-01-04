@@ -22,6 +22,8 @@ jobs:
       ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
     steps:
+    - name: create empty env file
+      run: touch .env 
     - uses: actions/checkout@v3
     - name: deploy
       run: docker compose -f prod.docker-compose.yml up -d
