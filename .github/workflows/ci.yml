@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ${{IMAGE_TAG}}
+      run: docker build . --file Dockerfile --tag $IMAGE_TAG
   deploy:
     needs: build 
     runs-on: self-hosted
