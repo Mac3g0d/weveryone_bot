@@ -17,11 +17,11 @@ var (
 )
 
 func init() {
-	log.PrintF("start load envs")
+	log.Printf("start load envs")
 	var err error
 	err = godotenv.Load()
 	if err != nil {
-	   log.Fatal(err)
+		log.Fatal(err)
 	}
 
 }
