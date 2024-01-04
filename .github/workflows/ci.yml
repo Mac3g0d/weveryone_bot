@@ -18,7 +18,10 @@ jobs:
   deploy:
     needs: build 
     runs-on: self-hosted
+    env:
+      ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag weveryone_bot:$(date +%s)
+      run: docker run weveryone_bot
