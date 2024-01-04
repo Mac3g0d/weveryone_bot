@@ -5,6 +5,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+env:
+  IMAGE_NAME: weveryone_bot:$(date +%s)
 
 jobs:
   create_blank_env_file:
@@ -13,17 +15,17 @@ jobs:
     - name: create empty env file
       run: touch .env 
   
-  cleanup:
+  build:
     needs: create_blank_env_file
     runs-on: self-hosted
     steps:
-    - name: down containers
-      run: docker compose down
     - name: deep cleanup
       run: docker system prune -a -f
+    - name: build image
+      run: docker build . -t $IMAGE_NAME
       
   deploy:
-    needs: ["create_blank_env_file", "cleanup"] 
+    needs: ["create_blank_env_file", "build"] 
     runs-on: self-hosted
     env:
       ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
@@ -31,4 +33,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: deploy
-      run: docker compose up 
+      run: docker run $IMAGE_NAME
