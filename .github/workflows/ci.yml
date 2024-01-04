@@ -11,7 +11,7 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: down containers
-      run: docker compose -f prod.docker-compose.yml down
+      run: docker compose down
     - name: deep cleanup
       run: docker system prune -a -f
       
@@ -26,4 +26,4 @@ jobs:
       run: touch .env 
     - uses: actions/checkout@v3
     - name: deploy
-      run: docker compose -f prod.docker-compose.yml up -d
+      run: docker compose up 
