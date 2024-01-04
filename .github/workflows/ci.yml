@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    
 env:
   IMAGE_NAME: weveryone_bot:$(date +%s)
 
@@ -22,7 +23,7 @@ jobs:
     - name: deep cleanup
       run: docker system prune -a -f
     - name: build image
-      run: docker build . -t $IMAGE_NAME
+      run: docker build . -t ${{ env.IMAGE_NAME }}
       
   deploy:
     needs: ["create_blank_env_file", "build"] 
@@ -33,4 +34,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: deploy
-      run: docker run $IMAGE_NAME
+      run: docker run ${{ env.IMAGE_NAME }}
