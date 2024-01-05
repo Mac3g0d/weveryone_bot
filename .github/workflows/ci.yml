@@ -34,4 +34,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: deploy
-      run: docker run weveryone_bot:latest
+      run: export ADMIN_TELEGRAM_ID="$ADMIN_TELEGRAM_ID" && export BOT_TOKEN="$BOT_TOKEN" && docker run weveryone_bot:latest
