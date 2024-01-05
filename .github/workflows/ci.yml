@@ -29,6 +29,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: stop last container
-      run: docker stop weveryone_bot:latest && docker rm -f weveryone_bot:latest
+      run: docker stop weveryone_bot
     - name: deploy
       run: docker run -d -e BOT_TOKEN=${ADMIN_TELEGRAM_ID} -e BOT_TOKEN=${BOT_TOKEN} weveryone_bot:latest
