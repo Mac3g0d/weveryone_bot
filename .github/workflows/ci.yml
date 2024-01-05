@@ -14,6 +14,8 @@ jobs:
   build:
     runs-on: self-hosted
     steps:
+    - name: stop last container
+      run: docker stop bot
     - name: deep cleanup
       run: docker system prune -a -f
     - name: build image
@@ -28,7 +30,5 @@ jobs:
       ENVIRONMENT: "PROD"
     steps:
     - uses: actions/checkout@v3
-    - name: stop last container
-      run: docker stop weveryone_bot
     - name: deploy
-      run: docker run -d -e BOT_TOKEN=${ADMIN_TELEGRAM_ID} -e BOT_TOKEN=${BOT_TOKEN} weveryone_bot:latest
+      run: docker run --name bot -d -e BOT_TOKEN=${ADMIN_TELEGRAM_ID} -e BOT_TOKEN=${BOT_TOKEN} weveryone_bot:latest
