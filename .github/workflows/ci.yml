@@ -34,4 +34,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: deploy
-      run: docker run ${{ env.IMAGE_NAME }}
+      run: docker run weveryone_bot:latest
