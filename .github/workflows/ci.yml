@@ -30,4 +30,4 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: deploy
-      run: docker run weveryone_bot:latest --env BOT_TOKEN=${ADMIN_TELEGRAM_ID} --env BOT_TOKEN=${BOT_TOKEN}
+      run: docker run -e BOT_TOKEN=${ADMIN_TELEGRAM_ID} -e BOT_TOKEN=${BOT_TOKEN} weveryone_bot:latest
