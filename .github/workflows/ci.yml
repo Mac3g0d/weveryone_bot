@@ -16,8 +16,6 @@ jobs:
     steps:
     - name: deep cleanup
       run: docker system prune -a -f
-    - name: create empty env file
-      run: touch .env 
     - name: build image
       run: docker build . -t weveryone_bot
       
@@ -30,7 +28,6 @@ jobs:
       ENVIRONMENT: PROD
     steps:
     - uses: actions/checkout@v3
-    - name: check
-      run: ls 
+
     - name: deploy
       run: docker run weveryone_bot:latest
