@@ -25,9 +25,9 @@ jobs:
     env:
       ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-      ENVIRONMENT: PROD
+      ENVIRONMENT: "PROD"
     steps:
     - uses: actions/checkout@v3
 
     - name: deploy
-      run: docker run weveryone_bot:latest -e BOT_TOKEN="${ADMIN_TELEGRAM_ID}" -e BOT_TOKEN="${BOT_TOKEN}" -e ENVIRONMENT="${ENVIRONMENT}"
+      run: docker run weveryone_bot:latest -env BOT_TOKEN=${ADMIN_TELEGRAM_ID} -e BOT_TOKEN=${BOT_TOKEN}
