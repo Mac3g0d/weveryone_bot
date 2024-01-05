@@ -30,6 +30,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: check
-      run: docker exec -it weveryone_bot ls
+      run: ls 
     - name: deploy
       run: docker run weveryone_bot:latest
