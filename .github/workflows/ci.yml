@@ -23,7 +23,7 @@ jobs:
     - name: deep cleanup
       run: docker system prune -a -f
     - name: build image
-      run: docker build . -t ${{ env.IMAGE_NAME }}
+      run: docker build . -t weveryone_bot
       
   deploy:
     needs: ["create_blank_env_file", "build"] 
