@@ -22,12 +22,12 @@ jobs:
   deploy:
     needs: build 
     runs-on: self-hosted
+    env:
+      ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      ENVIRONMENT: PROD
     steps:
     - uses: actions/checkout@v3
 
     - name: deploy
-      run: docker run weveryone_bot:latest
-      with:
-        ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
-        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        ENVIRONMENT: PROD
+      run: docker run weveryone_bot:latest -e BOT_TOKEN="${ADMIN_TELEGRAM_ID}" -e BOT_TOKEN="${BOT_TOKEN}" -e ENVIRONMENT="${ENVIRONMENT}"
