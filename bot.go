@@ -14,14 +14,18 @@ var (
 	participants    = make(map[int64][]string)
 	username        string
 	lastCommandCall = make(map[int64]time.Time)
+	environment     = os.Getenv("ENVIRONMENT")
 )
 
 func init() {
-	log.Printf("start load envs")
-	var err error
-	err = godotenv.Load()
-	if err != nil {
-		log.Fatalf("get error when trying load envs %s", err)
+	log.Printf("start load envs, environment is %s", environment)
+
+	if environment == "local" {
+		var err error
+		err = godotenv.Load()
+		if err != nil {
+			log.Fatalf("get error when trying load envs %s", err)
+		}
 	}
 
 }
