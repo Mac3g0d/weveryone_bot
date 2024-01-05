@@ -9,24 +9,20 @@ on:
 env:
   IMAGE_NAME: weveryone_bot:$(date +%s)
 
-jobs:
-  create_blank_env_file:
-    runs-on: self-hosted
-    steps:
-    - name: create empty env file
-      run: touch .env 
+jobs:   
   
   build:
-    needs: create_blank_env_file
     runs-on: self-hosted
     steps:
     - name: deep cleanup
       run: docker system prune -a -f
+    - name: create empty env file
+      run: touch .env 
     - name: build image
       run: docker build . -t weveryone_bot
       
   deploy:
-    needs: ["create_blank_env_file", "build"] 
+    needs: build 
     runs-on: self-hosted
     env:
       ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
@@ -34,4 +30,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: deploy
-      run: export ADMIN_TELEGRAM_ID="$ADMIN_TELEGRAM_ID" && export BOT_TOKEN="$BOT_TOKEN" && docker run weveryone_bot:latest
+      run: docker run weveryone_bot:latest
